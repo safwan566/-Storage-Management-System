@@ -2,40 +2,37 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { UserService } from '../services/user.service';
 import { EmailService } from '../services/email.service';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.utils';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
 import { ApiError } from '../utils/ApiError';
 import { successResponse, createdResponse } from '../views/responses/success.response';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../config/constants';
 
-export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { name, email, password, phone } = req.body;
+export const signup = asyncHandler(async (req: Request, res: Response) => {
+  const { name, email, password } = req.body;
   
   const user = await UserService.createUser({
     name,
     email,
     password,
-    phone,
   });
   
-  // Send welcome email
   await EmailService.sendWelcomeEmail({ name, email });
   
   const sanitizedUser = UserService.sanitizeUser(user);
   
-  createdResponse(res, SUCCESS_MESSAGES.REGISTER_SUCCESS, sanitizedUser);
+  createdResponse(res, 'User registered successfully', sanitizedUser);
 });
 
-export const login = asyncHandler(async (req: Request, res: Response) => {
+export const signin = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   
   const user = await UserService.getUserByEmail(email);
   
   if (!user || !(await user.comparePassword(password))) {
-    throw ApiError.unauthorized(ERROR_MESSAGES.INVALID_CREDENTIALS);
+    throw ApiError.unauthorized('Invalid email or password');
   }
   
   if (!user.isActive) {
-    throw ApiError.forbidden(ERROR_MESSAGES.USER_INACTIVE);
+    throw ApiError.forbidden('Account is inactive');
   }
   
   const payload = {
@@ -49,75 +46,41 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   
   const sanitizedUser = UserService.sanitizeUser(user);
   
-  successResponse(res, SUCCESS_MESSAGES.LOGIN_SUCCESS, {
+  successResponse(res, 'Login successful', {
     user: sanitizedUser,
     accessToken,
     refreshToken,
   });
 });
 
-export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body;
   
-  try {
-    const decoded = verifyRefreshToken(refreshToken);
-    
-    const user = await UserService.getUserById(decoded.userId);
-    
-    if (!user.isActive) {
-      throw ApiError.forbidden(ERROR_MESSAGES.USER_INACTIVE);
-    }
-    
-    const payload = {
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    };
-    
-    const newAccessToken = generateAccessToken(payload);
-    const newRefreshToken = generateRefreshToken(payload);
-    
-    successResponse(res, 'Token refreshed successfully', {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    });
-  } catch (error) {
-    throw ApiError.unauthorized(ERROR_MESSAGES.TOKEN_INVALID);
-  }
+  const { code } = await UserService.generatePasswordResetToken(email);
+  
+  await EmailService.sendVerificationCode(email, code);
+  
+  successResponse(res, 'Verification code sent to your email');
 });
 
-export const getProfile = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    throw ApiError.unauthorized(ERROR_MESSAGES.UNAUTHORIZED);
+export const verifyCode = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+  
+  const isValid = await UserService.verifyResetCode(email, code);
+  
+  if (!isValid) {
+    throw ApiError.badRequest('Invalid or expired verification code');
   }
   
-  const user = await UserService.getUserById(req.user.userId);
-  const sanitizedUser = UserService.sanitizeUser(user);
-  
-  successResponse(res, 'Profile retrieved successfully', sanitizedUser);
+  successResponse(res, 'Verification code is valid');
 });
 
-export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    throw ApiError.unauthorized(ERROR_MESSAGES.UNAUTHORIZED);
-  }
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code, newPassword } = req.body;
   
-  const updates = req.body;
-  const user = await UserService.updateUser(req.user.userId, updates);
-  const sanitizedUser = UserService.sanitizeUser(user);
+  await UserService.resetPassword(email, code, newPassword);
   
-  successResponse(res, SUCCESS_MESSAGES.USER_UPDATED, sanitizedUser);
+  await EmailService.sendPasswordResetConfirmation(email);
+  
+  successResponse(res, 'Password reset successful');
 });
-
-export const changePassword = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    throw ApiError.unauthorized(ERROR_MESSAGES.UNAUTHORIZED);
-  }
-  
-  const { currentPassword, newPassword } = req.body;
-  
-  await UserService.changePassword(req.user.userId, currentPassword, newPassword);
-  
-  successResponse(res, 'Password changed successfully');
-});
-

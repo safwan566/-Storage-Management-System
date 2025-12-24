@@ -8,14 +8,14 @@ export interface JwtPayload {
 }
 
 export const generateAccessToken = (payload: JwtPayload): string => {
-  return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expire,
+  return jwt.sign(payload, config.jwt.secret as jwt.Secret, {
+    expiresIn: config.jwt.expire as jwt.SignOptions['expiresIn'],
   });
 };
 
 export const generateRefreshToken = (payload: JwtPayload): string => {
-  return jwt.sign(payload, config.jwt.refreshSecret, {
-    expiresIn: config.jwt.refreshExpire,
+  return jwt.sign(payload, config.jwt.refreshSecret as jwt.Secret, {
+    expiresIn: config.jwt.refreshExpire as jwt.SignOptions['expiresIn'],
   });
 };
 

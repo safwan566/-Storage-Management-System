@@ -1,31 +1,32 @@
 import { Router } from 'express';
-import {
-  createUser,
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-} from '../controllers/user.controller';
-import { authenticate, isAdmin } from '../middlewares/auth.middleware';
+import { updateProfile, changePassword, deleteProfile } from '../controllers/user.controller';
+import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import {
-  createUserSchema,
-  updateUserSchema,
-  getUserSchema,
-  deleteUserSchema,
-} from '../validators/user.validator';
+import { updateProfileSchema, changePasswordSchema } from '../validators/user.validator';
+import { uploadSingleImage } from '../middlewares/fileUpload.middleware';
 
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-// Admin only routes
-router.post('/', isAdmin, validate(createUserSchema), createUser);
-router.get('/', isAdmin, getAllUsers);
-router.get('/:id', isAdmin, validate(getUserSchema), getUserById);
-router.put('/:id', isAdmin, validate(updateUserSchema), updateUser);
-router.delete('/:id', isAdmin, validate(deleteUserSchema), deleteUser);
+// Update profile (name and/or avatar)
+router.patch(
+  '/profile',
+  uploadSingleImage,
+  validate(updateProfileSchema),
+  updateProfile
+);
+
+// Change password
+router.patch(
+  '/change-password',
+  validate(changePasswordSchema),
+  changePassword
+);
+
+// Delete profile
+router.delete('/profile', deleteProfile);
 
 export default router;
 

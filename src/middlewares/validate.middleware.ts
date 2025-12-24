@@ -1,17 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
-import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS } from '../config/constants';
 
 export const validate = (schema: AnyZodObject) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
-      next();
+      return next();
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages = error.errors.map((err) => ({
@@ -19,7 +18,7 @@ export const validate = (schema: AnyZodObject) => {
           message: err.message,
         }));
         
-        return res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).json({
+        res.status(HTTP_STATUS.UNPROCESSABLE_ENTITY).json({
           success: false,
           message: 'Validation failed',
           error: {
@@ -27,9 +26,10 @@ export const validate = (schema: AnyZodObject) => {
             details: errorMessages,
           },
         });
+        return;
       }
       
-      next(error);
+      return next(error);
     }
   };
 };

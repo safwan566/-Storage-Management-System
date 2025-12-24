@@ -2,68 +2,65 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { config } from './config/environment';
 import { logger } from './config/logger';
-import routes from './routes';
+import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
+import uploadRoutes from './routes/upload.routes';
+import noteRoutes from './routes/note.routes';
+import folderRoutes from './routes/folder.routes';
+import storageRoutes from './routes/storage.routes';
+import imageRoutes from './routes/image.routes';
 import { errorHandler } from './middlewares/error.middleware';
-import { notFound } from './middlewares/notFound.middleware';
 
 const app: Application = express();
 
-// Security middleware
 app.use(helmet());
 
-// CORS
 app.use(cors({
   origin: config.env === 'production' ? ['https://yourdomain.com'] : '*',
   credentials: true,
 }));
 
-// Compression
 app.use(compression());
 
-// Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.maxRequests,
-  message: 'Too many requests from this IP, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Serve static files from uploads directory
+app.use('/api/uploads', express.static(path.join(process.cwd(), config.upload.path)));
 
-app.use('/api/', limiter);
-
-// Static files
-app.use('/uploads', express.static(config.upload.path));
-
-// Request logging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
 
-// API routes
-app.use('/api/v1', routes);
-
-// Root route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     success: true,
     message: `Welcome to ${config.appName} API`,
     version: '1.0.0',
-    documentation: '/api/v1/health',
+    status: 'Server is running',
   });
 });
 
-// 404 handler
-app.use(notFound);
+app.get('/health', (_req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
 
-// Error handler (must be last)
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/notes', noteRoutes);
+app.use('/api/folders', folderRoutes);
+app.use('/api/storage', storageRoutes);
+app.use('/api/images', imageRoutes);
+
 app.use(errorHandler);
 
 export default app;

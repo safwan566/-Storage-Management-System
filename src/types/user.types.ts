@@ -16,6 +16,10 @@ export interface IUser extends Document {
     zipCode: string;
     country: string;
   };
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+  storageUsed: number;
+  storageLimit: number;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;

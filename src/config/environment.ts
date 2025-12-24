@@ -25,6 +25,12 @@ const envSchema = z.object({
   UPLOAD_PATH: z.string().default('./public/uploads'),
   
   LOG_LEVEL: z.string().default('info'),
+  
+  SMTP_HOST: z.string(),
+  SMTP_PORT: z.string().default('587'),
+  SMTP_USER: z.string(),
+  SMTP_PASS: z.string(),
+  SMTP_FROM: z.string(),
 });
 
 const envVars = envSchema.parse(process.env);
@@ -64,5 +70,13 @@ export const config = {
   log: {
     level: envVars.LOG_LEVEL,
   },
-} as const;
+  
+  smtp: {
+    host: envVars.SMTP_HOST,
+    port: parseInt(envVars.SMTP_PORT, 10),
+    user: envVars.SMTP_USER,
+    pass: envVars.SMTP_PASS,
+    from: envVars.SMTP_FROM,
+  },
+};
 

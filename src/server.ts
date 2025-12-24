@@ -3,7 +3,6 @@ import { config } from './config/environment';
 import { logger } from './config/logger';
 import { connectDatabase } from './config/database';
 import fs from 'fs';
-import path from 'path';
 
 // Create necessary directories
 const createDirectories = () => {
@@ -31,13 +30,7 @@ const startServer = async () => {
     
     // Start listening
     const server = app.listen(config.port, () => {
-      logger.info(`
-        ====================================
-        🚀 Server running on port ${config.port}
-        📝 Environment: ${config.env}
-        🔗 URL: http://localhost:${config.port}
-        ====================================
-      `);
+      logger.info(`Server running on port ${config.port}`);
     });
     
     // Graceful shutdown
@@ -75,17 +68,7 @@ const startServer = async () => {
   }
 };
 
-// Handle unhandled rejections
-process.on('unhandledRejection', (reason: Error) => {
-  logger.error('Unhandled Rejection:', reason);
-  throw reason;
-});
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error: Error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
-});
 
 // Start the server
 startServer();

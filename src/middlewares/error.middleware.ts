@@ -9,8 +9,8 @@ export const errorHandler = (
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  next: NextFunction
-) => {
+  _next: NextFunction
+): Response | void => {
   let error = err;
   
   // Log error
@@ -52,7 +52,7 @@ export const errorHandler = (
   
   // API Error
   if (error instanceof ApiError) {
-    return res.status(error.statusCode).json({
+    res.status(error.statusCode).json({
       success: false,
       message: error.message,
       error: {
@@ -60,10 +60,11 @@ export const errorHandler = (
         ...(config.env === 'development' && { stack: error.stack }),
       },
     });
+    return;
   }
   
   // Default error
-  return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
     success: false,
     message: 'Internal server error',
     error: {
@@ -71,5 +72,6 @@ export const errorHandler = (
       ...(config.env === 'development' && { stack: err.stack }),
     },
   });
+  return;
 };
 

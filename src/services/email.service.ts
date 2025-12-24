@@ -1,68 +1,75 @@
+import nodemailer from 'nodemailer';
 import { logger } from '../config/logger';
-import {
-  welcomeEmailTemplate,
-  WelcomeEmailData,
-  orderConfirmationTemplate,
-  OrderConfirmationData,
-} from '../views/templates/email.template';
+import { config } from '../config/environment';
 
 export class EmailService {
-  // Note: This is a mock implementation. In production, you would integrate
-  // with a real email service like SendGrid, AWS SES, or Nodemailer
+  private static transporter = nodemailer.createTransport({
+    host: config.smtp.host,
+    port: config.smtp.port,
+    secure: false,
+    auth: {
+      user: config.smtp.user,
+      pass: config.smtp.pass,
+    },
+  });
   
-  static async sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
+  static async sendWelcomeEmail(data: { name: string; email: string }): Promise<void> {
     try {
-      const html = welcomeEmailTemplate(data);
+      await this.transporter.sendMail({
+        from: config.smtp.from,
+        to: data.email,
+        subject: 'Welcome to Storage Management System',
+        html: `
+          <h1>Welcome ${data.name}!</h1>
+          <p>Thank you for signing up to Storage Management System.</p>
+          <p>We're excited to have you on board.</p>
+        `,
+      });
       
-      // Mock email sending
-      logger.info(`Sending welcome email to ${data.email}`);
-      logger.debug(`Email content: ${html}`);
-      
-      // In production, you would send the email here:
-      // await transporter.sendMail({
-      //   from: config.email.from,
-      //   to: data.email,
-      //   subject: 'Welcome to Storage Management System',
-      //   html,
-      // });
-      
-      logger.info(`Welcome email sent successfully to ${data.email}`);
+      logger.info(`Welcome email sent to ${data.email}`);
     } catch (error) {
       logger.error('Error sending welcome email:', error);
       throw error;
     }
   }
   
-  static async sendOrderConfirmation(
-    email: string,
-    data: OrderConfirmationData
-  ): Promise<void> {
+  static async sendVerificationCode(email: string, code: string): Promise<void> {
     try {
-      const html = orderConfirmationTemplate(data);
+      await this.transporter.sendMail({
+        from: config.smtp.from,
+        to: email,
+        subject: 'Password Reset Verification Code',
+        html: `
+          <h1>Password Reset Request</h1>
+          <p>Your verification code is: <strong>${code}</strong></p>
+          <p>This code will expire in 15 minutes.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        `,
+      });
       
-      // Mock email sending
-      logger.info(`Sending order confirmation email to ${email}`);
-      logger.debug(`Email content: ${html}`);
-      
-      // In production, you would send the email here
-      
-      logger.info(`Order confirmation email sent successfully to ${email}`);
+      logger.info(`Verification code sent to ${email}`);
     } catch (error) {
-      logger.error('Error sending order confirmation email:', error);
+      logger.error('Error sending verification code:', error);
       throw error;
     }
   }
   
-  static async sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {
+  static async sendPasswordResetConfirmation(email: string): Promise<void> {
     try {
-      logger.info(`Sending password reset email to ${email}`);
-      logger.debug(`Reset token: ${resetToken}`);
+      await this.transporter.sendMail({
+        from: config.smtp.from,
+        to: email,
+        subject: 'Password Reset Successful',
+        html: `
+          <h1>Password Reset Successful</h1>
+          <p>Your password has been successfully reset.</p>
+          <p>If you didn't make this change, please contact support immediately.</p>
+        `,
+      });
       
-      // In production, you would send the email here
-      
-      logger.info(`Password reset email sent successfully to ${email}`);
+      logger.info(`Password reset confirmation sent to ${email}`);
     } catch (error) {
-      logger.error('Error sending password reset email:', error);
+      logger.error('Error sending password reset confirmation:', error);
       throw error;
     }
   }

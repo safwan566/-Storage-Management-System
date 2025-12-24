@@ -102,6 +102,67 @@ export class UserService {
     await user.save();
   }
   
+  static async generatePasswordResetToken(email: string): Promise<{ user: IUser; code: string }> {
+    const user = await User.findOne({ email }).select('+resetPasswordToken +resetPasswordExpires');
+    
+    if (!user) {
+      throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    user.resetPasswordToken = code;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    
+    await user.save();
+    
+    return { user, code };
+  }
+  
+  static async verifyResetCode(email: string, code: string): Promise<boolean> {
+    const user = await User.findOne({ email }).select('+resetPasswordToken +resetPasswordExpires');
+    
+    if (!user || !user.resetPasswordToken || !user.resetPasswordExpires) {
+      return false;
+    }
+    
+    if (user.resetPasswordToken !== code) {
+      return false;
+    }
+    
+    if (user.resetPasswordExpires < new Date()) {
+      return false;
+    }
+    
+    return true;
+  }
+  
+  static async resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+    const user = await User.findOne({ email }).select('+password +resetPasswordToken +resetPasswordExpires');
+    
+    if (!user) {
+      throw ApiError.notFound(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+    
+    if (!user.resetPasswordToken || !user.resetPasswordExpires) {
+      throw ApiError.badRequest('No password reset requested');
+    }
+    
+    if (user.resetPasswordToken !== code) {
+      throw ApiError.badRequest('Invalid verification code');
+    }
+    
+    if (user.resetPasswordExpires < new Date()) {
+      throw ApiError.badRequest('Verification code has expired');
+    }
+    
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    await user.save();
+  }
+  
   static sanitizeUser(user: IUser): IUserResponse {
     return {
       _id: user._id,

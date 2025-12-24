@@ -50,20 +50,36 @@ const userSchema = new Schema<IUser>(
       zipCode: String,
       country: String,
     },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
+    },
+    storageUsed: {
+      type: Number,
+      default: 0, // in bytes
+    },
+    storageLimit: {
+      type: Number,
+      default: 16106127360, // 15 GB in bytes (15 * 1024 * 1024 * 1024)
+    },
   },
   {
     timestamps: true,
     toJSON: {
-      transform: function (doc, ret) {
-        delete ret.password;
+      transform: function (_doc, ret) {
+        delete (ret as any).password;
+        delete (ret as any).resetPasswordToken;
+        delete (ret as any).resetPasswordExpires;
         return ret;
       },
     },
   }
 );
 
-// Index for faster queries
-userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 
 // Hash password before saving

@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
-import { ERROR_MESSAGES } from '../config/constants';
 
-export const notFound = (req: Request, res: Response, next: NextFunction) => {
+export const notFound = (req: Request, _res: Response, next: NextFunction) => {
   const error = ApiError.notFound(
     `Route not found: ${req.method} ${req.originalUrl}`
   );

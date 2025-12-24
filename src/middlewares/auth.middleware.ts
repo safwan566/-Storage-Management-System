@@ -5,7 +5,7 @@ import { ERROR_MESSAGES, USER_ROLES } from '../config/constants';
 import { asyncHandler } from '../utils/asyncHandler';
 
 export const authenticate = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, _res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -25,7 +25,7 @@ export const authenticate = asyncHandler(
 );
 
 export const authorize = (...roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       throw ApiError.unauthorized(ERROR_MESSAGES.UNAUTHORIZED);
     }

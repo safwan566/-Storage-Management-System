@@ -4,20 +4,25 @@ import { config } from './environment';
 
 const logDir = 'logs';
 
+const stripTimestamp = winston.format((info) => {
+  delete info.timestamp;
+  return info;
+});
+
 const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
   winston.format.splat(),
+  stripTimestamp(),
   winston.format.json()
 );
 
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    let msg = `${timestamp} [${level}]: ${message}`;
-    if (Object.keys(meta).length > 0) {
-      msg += ` ${JSON.stringify(meta)}`;
+  winston.format.printf(({ level, message, ...meta }) => {
+    const { timestamp, ...rest } = meta;
+    let msg = `[${level}]: ${message}`;
+    if (Object.keys(rest).length > 0) {
+      msg += ` ${JSON.stringify(rest)}`;
     }
     return msg;
   })
