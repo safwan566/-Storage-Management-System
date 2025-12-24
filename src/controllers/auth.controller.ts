@@ -36,7 +36,7 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
   }
   
   const payload = {
-    userId: user._id,
+    userId: user._id.toString(),
     email: user.email,
     role: user.role,
   };

@@ -1,7 +1,6 @@
 import { Document, Types } from 'mongoose';
 
 export interface INote extends Document {
-  _id: string;
   userId: Types.ObjectId;
   folderId?: Types.ObjectId | null;
   title: string;

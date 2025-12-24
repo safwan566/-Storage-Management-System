@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getStorageStats } from '../controllers/storage.controller';
+import { getRecentItems } from '../controllers/storage.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 
 const router = Router();
@@ -8,17 +8,10 @@ const router = Router();
 router.use(authenticate);
 
 /**
- * Get storage statistics for current user
- * @route GET /api/storage/stats
+ * Get recent items (all types: notes, images, PDFs, folders) with pagination
+ * @route GET /api/storage/recent
  * @access Private
  */
-router.get('/stats', getStorageStats);
+router.get('/recent', getRecentItems);
 
 export default router;
-
-
-
-
-
-
-

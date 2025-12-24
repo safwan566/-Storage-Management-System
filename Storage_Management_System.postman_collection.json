@@ -884,6 +884,45 @@
             },
             "description": "Get detailed storage statistics including total used, available, limit, and breakdown by type (note, image, pdf)."
           }
+        },
+        {
+          "name": "Get Recent Items (All Types)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/recent?page=1&limit=10&type=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "storage", "recent"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by type: 'note', 'image', 'pdf', 'folder' (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all recently added items (notes, images, PDFs, folders) together, sorted by creation date. Returns 10 items per page by default. Supports filtering by type."
+          }
         }
       ]
     }

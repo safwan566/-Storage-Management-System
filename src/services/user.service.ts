@@ -165,7 +165,7 @@ export class UserService {
   
   static sanitizeUser(user: IUser): IUserResponse {
     return {
-      _id: user._id,
+      _id: user._id.toString(),
       name: user.name,
       email: user.email,
       role: user.role,

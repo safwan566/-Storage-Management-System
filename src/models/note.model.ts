@@ -62,3 +62,6 @@ export const Note = mongoose.model<INote>('Note', noteSchema);
 
 
 
+
+
+
