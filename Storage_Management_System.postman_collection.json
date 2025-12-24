@@ -705,6 +705,165 @@
       ]
     },
     {
+      "name": "PDFs",
+      "item": [
+        {
+          "name": "Get All PDFs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs?folderId=&title=&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs"],
+              "query": [
+                {
+                  "key": "folderId",
+                  "value": "",
+                  "description": "Filter by folder ID (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "title",
+                  "value": "",
+                  "description": "Search by title (case-insensitive, optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all PDFs for the authenticated user with filtering and pagination. Supports filtering by folderId and title search."
+          }
+        },
+        {
+          "name": "Get PDF by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get a specific PDF by ID and update its last accessed time."
+          }
+        },
+        {
+          "name": "Update PDF",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated PDF Title\",\n  \"folderId\": null\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Update PDF metadata (title and/or folder). Cannot modify the actual PDF file."
+          }
+        },
+        {
+          "name": "Delete PDF",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Delete a PDF and its associated file from storage. Storage is freed."
+          }
+        },
+        {
+          "name": "Duplicate PDF",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs/:id/duplicate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs", ":id", "duplicate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Create a duplicate of an existing PDF. Copies both the file and database record. Checks storage limit before duplication."
+          }
+        }
+      ]
+    },
+    {
       "name": "Storage",
       "item": [
         {

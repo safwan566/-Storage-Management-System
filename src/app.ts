@@ -2,7 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import path from 'path';
+import path from 'node:path';
 import { config } from './config/environment';
 import { logger } from './config/logger';
 import authRoutes from './routes/auth.routes';
@@ -12,6 +12,7 @@ import noteRoutes from './routes/note.routes';
 import folderRoutes from './routes/folder.routes';
 import storageRoutes from './routes/storage.routes';
 import imageRoutes from './routes/image.routes';
+import pdfRoutes from './routes/pdf.routes';
 import { errorHandler } from './middlewares/error.middleware';
 
 const app: Application = express();
@@ -60,6 +61,7 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/storage', storageRoutes);
 app.use('/api/images', imageRoutes);
+app.use('/api/pdfs', pdfRoutes);
 
 app.use(errorHandler);
 
