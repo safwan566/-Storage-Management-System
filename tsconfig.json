@@ -24,7 +24,11 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "tests"],
   "ts-node": {
-    "files": true
+    "files": true,
+    "compilerOptions": {
+      "noUnusedLocals": false,
+      "noUnusedParameters": false
+    }
   }
 }
 

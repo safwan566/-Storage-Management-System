@@ -4,7 +4,8 @@ import {
   getPDFById, 
   updatePDF, 
   deletePDF, 
-  duplicatePDF 
+  duplicatePDF,
+  togglePDFFavorite
 } from '../controllers/pdf.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -18,11 +19,13 @@ router.get('/', getAllPDFs);
 
 router.get('/:id', getPDFById);
 
+router.patch('/:id/favorite', togglePDFFavorite);
+
 router.patch('/:id', validate(updatePDFSchema), updatePDF);
 
-router.delete('/:id', deletePDF);
-
 router.post('/:id/duplicate', duplicatePDF);
+
+router.delete('/:id', deletePDF);
 
 export default router;
 

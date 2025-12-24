@@ -6,6 +6,8 @@ import { Note } from '../models/note.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { filePathToUrl } from '../utils/file.utils';
+import { getPaginationParams, getPaginationResult } from '../utils/pagination.utils';
+import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'node:fs';
 
 /**
@@ -74,9 +76,14 @@ export const createNote = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * Get all notes for current user
+ * Get all notes for current user with pagination and search
  * @route GET /api/notes
  * @access Private
+ * @query {number} page - Page number (default: 1)
+ * @query {number} limit - Items per page (default: 20, max: 100)
+ * @query {string} search - Search by title or content (optional)
+ * @query {string} folderId - Filter by folder ID (optional)
+ * @query {boolean} isFavorite - Filter by favorite status (optional)
  */
 export const getAllNotes = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -85,9 +92,44 @@ export const getAllNotes = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const notes = await Note.find({ userId })
+  const { page, limit, search, folderId, isFavorite } = req.query;
+
+  // Get pagination parameters (default: 20 items per page)
+  const { page: pageNum, limit: limitNum, skip } = getPaginationParams({
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 20,
+  });
+
+  // Build query - ONLY for text notes (type='note')
+  const query: any = { userId, type: 'note' };
+
+  // Add search filter
+  if (search && typeof search === 'string') {
+    query.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { content: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  // Add folder filter
+  if (folderId && typeof folderId === 'string') {
+    query.folderId = folderId;
+  }
+
+  // Add favorite filter
+  if (isFavorite !== undefined) {
+    query.isFavorite = isFavorite === 'true';
+  }
+
+  // Get total count
+  const totalItems = await Note.countDocuments(query);
+
+  // Get notes with pagination
+  const notes = await Note.find(query)
     .sort({ createdAt: -1 })
-    .populate('folderId', 'name');
+    .skip(skip)
+    .limit(limitNum)
+;
 
   // Format notes with URL conversion
   const formattedNotes = notes.map(note => {
@@ -98,7 +140,10 @@ export const getAllNotes = asyncHandler(async (req: Request, res: Response) => {
     };
   });
 
-  successResponse(res, 'Notes retrieved successfully', { notes: formattedNotes });
+  // Get pagination result
+  const pagination = getPaginationResult(pageNum, limitNum, totalItems);
+
+  return paginatedResponse(res, 'Notes retrieved successfully', formattedNotes, pagination);
 });
 
 /**
@@ -116,7 +161,7 @@ export const getRecentNotes = asyncHandler(async (req: Request, res: Response) =
   const notes = await Note.find({ userId })
     .sort({ lastAccessedAt: -1 })
     .limit(10)
-    .populate('folderId', 'name');
+;
 
   // Format notes with URL conversion
   const formattedNotes = notes.map(note => {
@@ -143,7 +188,7 @@ export const getNoteById = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const note = await Note.findOne({ _id: id, userId }).populate('folderId', 'name');
+  const note = await Note.findOne({ _id: id, userId });
 
   if (!note) {
     throw ApiError.notFound('Note not found');
@@ -294,9 +339,41 @@ export const deleteNote = asyncHandler(async (req: Request, res: Response) => {
   successResponse(res, 'Note deleted successfully', { storage: storageInfo });
 });
 
+/**
+ * Toggle favorite status of a note
+ * @route PATCH /api/notes/:id/favorite
+ * @access Private
+ */
+export const toggleNoteFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { id } = req.params;
 
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
 
+  const note = await Note.findOne({ _id: id, userId });
 
+  if (!note) {
+    throw ApiError.notFound('Note not found');
+  }
+
+  note.isFavorite = !note.isFavorite;
+  await note.save();
+
+  // Format note with URL conversion
+  const noteObj = note.toObject();
+  const formattedNote = {
+    ...noteObj,
+    fileUrl: noteObj.fileUrl ? filePathToUrl(noteObj.fileUrl) : noteObj.fileUrl,
+  };
+
+  successResponse(
+    res,
+    `Note ${note.isFavorite ? 'added to' : 'removed from'} favorites`,
+    { note: formattedNote }
+  );
+});
 
 
 

@@ -5,6 +5,7 @@ import {
   updateFolder,
   deleteFolder,
   duplicateFolder,
+  toggleFolderFavorite,
 } from '../controllers/folder.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -28,6 +29,13 @@ router.get('/', getAllFolders);
  * @access Private
  */
 router.post('/', validate(createFolderSchema), createFolder);
+
+/**
+ * Toggle favorite status of a folder
+ * @route PATCH /api/folders/:id/favorite
+ * @access Private
+ */
+router.patch('/:id/favorite', toggleFolderFavorite);
 
 /**
  * Update a folder

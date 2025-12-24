@@ -6,13 +6,11 @@ import { Folder } from '../models/folder.model';
 import { Note } from '../models/note.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
+import { getPaginationParams, getPaginationResult } from '../utils/pagination.utils';
+import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'fs';
 
-/**
- * Get all folders for current user
- * @route GET /api/folders
- * @access Private
- */
+
 export const getAllFolders = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
@@ -20,11 +18,49 @@ export const getAllFolders = asyncHandler(async (req: Request, res: Response) =>
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const folders = await Folder.find({ userId })
-    .sort({ createdAt: -1 })
-    .populate('parentFolder', 'name');
+  const { page, limit, search, parentFolder, isFavorite } = req.query;
 
-  successResponse(res, 'Folders retrieved successfully', { folders });
+  // Get pagination parameters (default: 20 items per page)
+  const { page: pageNum, limit: limitNum, skip } = getPaginationParams({
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 20,
+  });
+
+  // Build query
+  const query: any = { userId };
+
+  // Add search filter
+  if (search && typeof search === 'string') {
+    query.name = { $regex: search, $options: 'i' };
+  }
+
+  // Add parent folder filter
+  if (parentFolder !== undefined) {
+    if (parentFolder === 'null') {
+      query.parentFolder = null;
+    } else if (typeof parentFolder === 'string') {
+      query.parentFolder = parentFolder;
+    }
+  }
+
+  // Add favorite filter
+  if (isFavorite !== undefined) {
+    query.isFavorite = isFavorite === 'true';
+  }
+
+  // Get total count
+  const totalItems = await Folder.countDocuments(query);
+
+  // Get folders with pagination
+  const folders = await Folder.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum);
+
+  // Get pagination result
+  const pagination = getPaginationResult(pageNum, limitNum, totalItems);
+
+  return paginatedResponse(res, 'Folders retrieved successfully', folders, pagination);
 });
 
 /**
@@ -243,9 +279,34 @@ export const duplicateFolder = asyncHandler(async (req: Request, res: Response) 
   });
 });
 
+/**
+ * Toggle favorite status of a folder
+ * @route PATCH /api/folders/:id/favorite
+ * @access Private
+ */
+export const toggleFolderFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { id } = req.params;
 
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
 
+  const folder = await Folder.findOne({ _id: id, userId });
 
+  if (!folder) {
+    throw ApiError.notFound('Folder not found');
+  }
+
+  folder.isFavorite = !folder.isFavorite;
+  await folder.save();
+
+  successResponse(
+    res,
+    `Folder ${folder.isFavorite ? 'added to' : 'removed from'} favorites`,
+    { folder }
+  );
+});
 
 
 

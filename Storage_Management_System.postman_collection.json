@@ -326,11 +326,43 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/notes",
+              "raw": "{{baseUrl}}/api/notes?page=1&limit=20&search=&folderId=&isFavorite=",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "notes"]
+              "path": ["api", "notes"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by title or content",
+                  "disabled": true
+                },
+                {
+                  "key": "folderId",
+                  "value": "",
+                  "description": "Filter by folder ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isFavorite",
+                  "value": "",
+                  "description": "Filter by favorite status: true/false",
+                  "disabled": true
+                }
+              ]
             },
-            "description": "Get all notes for the current user, sorted by creation date (newest first)."
+            "description": "Get all TEXT NOTES (type='note') for the current user with pagination and search. Only returns text notes, not images or PDFs. Supports filtering by folder, favorite status, and searching by title/content."
           }
         },
         {
@@ -411,6 +443,31 @@
           }
         },
         {
+          "name": "Toggle Note Favorite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notes/:id/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notes", ":id", "favorite"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Toggle favorite status of a note. If favorite, it will be unfavorited and vice versa."
+          }
+        },
+        {
           "name": "Delete Note",
           "request": {
             "method": "DELETE",
@@ -452,11 +509,43 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/folders",
+              "raw": "{{baseUrl}}/api/folders?page=1&limit=20&search=&parentFolder=&isFavorite=",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "folders"]
+              "path": ["api", "folders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by folder name",
+                  "disabled": true
+                },
+                {
+                  "key": "parentFolder",
+                  "value": "",
+                  "description": "Filter by parent folder ID (use 'null' for root folders)",
+                  "disabled": true
+                },
+                {
+                  "key": "isFavorite",
+                  "value": "",
+                  "description": "Filter by favorite status: true/false",
+                  "disabled": true
+                }
+              ]
             },
-            "description": "Get all folders for the current user, sorted by creation date."
+            "description": "Get all folders for the current user with pagination and search. Supports filtering by parent folder and favorite status."
           }
         },
         {
@@ -517,6 +606,31 @@
               ]
             },
             "description": "Update folder name."
+          }
+        },
+        {
+          "name": "Toggle Folder Favorite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/folders/:id/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "folders", ":id", "favorite"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Toggle favorite status of a folder. If favorite, it will be unfavorited and vice versa."
           }
         },
         {
@@ -586,11 +700,43 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/images",
+              "raw": "{{baseUrl}}/api/images?page=1&limit=20&search=&folderId=&isFavorite=",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "images"]
+              "path": ["api", "images"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by title",
+                  "disabled": true
+                },
+                {
+                  "key": "folderId",
+                  "value": "",
+                  "description": "Filter by folder ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isFavorite",
+                  "value": "",
+                  "description": "Filter by favorite status: true/false",
+                  "disabled": true
+                }
+              ]
             },
-            "description": "Get all images for the authenticated user. Supports optional folderId query parameter."
+            "description": "Get all images for the authenticated user with pagination and search. Supports filtering by folder and favorite status."
           }
         },
         {
@@ -616,6 +762,31 @@
               ]
             },
             "description": "Get a specific image by ID and update its last accessed time."
+          }
+        },
+        {
+          "name": "Toggle Image Favorite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/images/:id/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "images", ":id", "favorite"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Toggle favorite status of an image. If favorite, it will be unfavorited and vice versa."
           }
         },
         {
@@ -719,22 +890,10 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/pdfs?folderId=&title=&page=1&limit=10",
+              "raw": "{{baseUrl}}/api/pdfs?page=1&limit=20&search=&folderId=&isFavorite=",
               "host": ["{{baseUrl}}"],
               "path": ["api", "pdfs"],
               "query": [
-                {
-                  "key": "folderId",
-                  "value": "",
-                  "description": "Filter by folder ID (optional)",
-                  "disabled": true
-                },
-                {
-                  "key": "title",
-                  "value": "",
-                  "description": "Search by title (case-insensitive, optional)",
-                  "disabled": true
-                },
                 {
                   "key": "page",
                   "value": "1",
@@ -743,13 +902,31 @@
                 },
                 {
                   "key": "limit",
-                  "value": "10",
-                  "description": "Items per page (default: 10, max: 100)",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by title (case-insensitive)",
+                  "disabled": true
+                },
+                {
+                  "key": "folderId",
+                  "value": "",
+                  "description": "Filter by folder ID",
+                  "disabled": true
+                },
+                {
+                  "key": "isFavorite",
+                  "value": "",
+                  "description": "Filter by favorite status: true/false",
                   "disabled": true
                 }
               ]
             },
-            "description": "Get all PDFs for the authenticated user with filtering and pagination. Supports filtering by folderId and title search."
+            "description": "Get all PDFs for the authenticated user with filtering and pagination. Supports filtering by folderId, favorite status, and title search."
           }
         },
         {
@@ -775,6 +952,31 @@
               ]
             },
             "description": "Get a specific PDF by ID and update its last accessed time."
+          }
+        },
+        {
+          "name": "Toggle PDF Favorite",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pdfs/:id/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pdfs", ":id", "favorite"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Toggle favorite status of a PDF. If favorite, it will be unfavorited and vice versa."
           }
         },
         {
@@ -886,6 +1088,50 @@
           }
         },
         {
+          "name": "Get Items by Date (Calendar View)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/by-date?date=2025-01-31&page=1&limit=20&type=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "storage", "by-date"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-01-31",
+                  "description": "Date to filter by (format: YYYY-MM-DD) - REQUIRED"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 20, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by type: 'note', 'image', 'pdf', 'folder' (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all items (notes, images, PDFs, folders) created on a specific date. Perfect for calendar views. Returns items with summary breakdown by type. Date parameter is required in YYYY-MM-DD format."
+          }
+        },
+        {
           "name": "Get Recent Items (All Types)",
           "request": {
             "method": "GET",
@@ -923,6 +1169,51 @@
             },
             "description": "Get all recently added items (notes, images, PDFs, folders) together, sorted by creation date. Returns 10 items per page by default. Supports filtering by type."
           }
+        },
+        {
+          "name": "Get All Favorites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/favorites?page=1&limit=10&type=&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "storage", "favorites"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)",
+                  "disabled": true
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by type: 'note', 'image', 'pdf', 'folder' (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by title/name (optional)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all favorited items (notes, images, PDFs, folders) with pagination and search. Sorted by most recently updated. Supports filtering by type and searching by title/name."
+          }
         }
       ]
     }
@@ -930,7 +1221,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5000"
+      "value": "http://localhost:8000"
     },
     {
       "key": "accessToken",

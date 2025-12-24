@@ -21,6 +21,16 @@ const folderSchema = new Schema<IFolder>(
       default: null,
       index: true,
     },
+    type: {
+      type: String,
+      enum: ['note'],
+      required: [true, 'Type is required'],
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -30,6 +40,7 @@ const folderSchema = new Schema<IFolder>(
 // Indexes for better query performance
 folderSchema.index({ userId: 1, createdAt: -1 });
 folderSchema.index({ userId: 1, parentFolder: 1 });
+folderSchema.index({ userId: 1, isFavorite: 1 });
 
 // Prevent duplicate folder names at the same level for same user
 folderSchema.index({ userId: 1, name: 1, parentFolder: 1 }, { unique: true });

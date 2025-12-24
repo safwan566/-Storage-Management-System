@@ -4,8 +4,10 @@ export interface IFolder extends Document {
   userId: Types.ObjectId;
   name: string;
   parentFolder?: Types.ObjectId | null;
+  isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
+  type: 'folder';
 }
 
 export interface IFolderResponse {
@@ -13,6 +15,7 @@ export interface IFolderResponse {
   userId: string;
   name: string;
   parentFolder?: string | null;
+  isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

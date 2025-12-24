@@ -9,6 +9,7 @@ export interface INote extends Document {
   fileUrl?: string;
   fileSize: number;
   lastAccessedAt: Date;
+  isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ export interface INoteResponse {
   fileUrl?: string;
   fileSize: number;
   lastAccessedAt: Date;
+  isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

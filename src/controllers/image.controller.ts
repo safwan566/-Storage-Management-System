@@ -6,6 +6,8 @@ import { Note } from '../models/note.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { normalizeFilePath, getFileSizeInfo, filePathToUrl } from '../utils/file.utils';
+import { getPaginationParams, getPaginationResult } from '../utils/pagination.utils';
+import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -22,9 +24,14 @@ function formatImageResponse(image: any) {
 }
 
 /**
- * Get all images for current user
+ * Get all images for current user with pagination and search
  * @route GET /api/images
  * @access Private
+ * @query {number} page - Page number (default: 1)
+ * @query {number} limit - Items per page (default: 20, max: 100)
+ * @query {string} search - Search by title (optional)
+ * @query {string} folderId - Filter by folder ID (optional)
+ * @query {boolean} isFavorite - Filter by favorite status (optional)
  */
 export const getAllImages = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -33,32 +40,49 @@ export const getAllImages = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const { folderId } = req.query;
+  const { page, limit, search, folderId, isFavorite } = req.query;
+
+  // Get pagination parameters (default: 20 items per page)
+  const { page: pageNum, limit: limitNum, skip } = getPaginationParams({
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 20,
+  });
 
   // Build query
-  interface ImageQuery {
-    userId: string;
-    type: string;
-    folderId?: string | null;
+  const query: any = { userId, type: 'image' };
+
+  // Add search filter
+  if (search && typeof search === 'string') {
+    query.title = { $regex: search, $options: 'i' };
   }
-  
-  const query: ImageQuery = { userId, type: 'image' };
-  
+
+  // Add folder filter
   if (folderId && typeof folderId === 'string') {
     query.folderId = folderId;
   }
 
+  // Add favorite filter
+  if (isFavorite !== undefined) {
+    query.isFavorite = isFavorite === 'true';
+  }
+
+  // Get total count
+  const totalItems = await Note.countDocuments(query);
+
+  // Get images with pagination
   const images = await Note.find(query)
     .sort({ createdAt: -1 })
-    .populate('folderId', 'name');
+    .skip(skip)
+    .limit(limitNum)
+;
 
   // Format images with additional fields
   const formattedImages = images.map(formatImageResponse);
 
-  successResponse(res, 'Images retrieved successfully', { 
-    images: formattedImages,
-    count: formattedImages.length 
-  });
+  // Get pagination result
+  const pagination = getPaginationResult(pageNum, limitNum, totalItems);
+
+  return paginatedResponse(res, 'Images retrieved successfully', formattedImages, pagination);
 });
 
 /**
@@ -78,7 +102,7 @@ export const getImageById = asyncHandler(async (req: Request, res: Response) => 
     _id: id, 
     userId, 
     type: 'image' 
-  }).populate('folderId', 'name');
+  });
 
   if (!image) {
     throw ApiError.notFound('Image not found');
@@ -93,11 +117,6 @@ export const getImageById = asyncHandler(async (req: Request, res: Response) => 
   successResponse(res, 'Image retrieved successfully', { image: formattedImage });
 });
 
-/**
- * Update image metadata (title, folder)
- * @route PATCH /api/images/:id
- * @access Private
- */
 export const updateImage = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -131,18 +150,13 @@ export const updateImage = asyncHandler(async (req: Request, res: Response) => {
   await image.save();
 
   // Populate folder information
-  await image.populate('folderId', 'name');
 
   const formattedImage = formatImageResponse(image);
 
   successResponse(res, 'Image updated successfully', { image: formattedImage });
 });
 
-/**
- * Delete an image
- * @route DELETE /api/images/:id
- * @access Private
- */
+
 export const deleteImage = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -274,7 +288,6 @@ export const duplicateImage = asyncHandler(async (req: Request, res: Response) =
   await user.save();
 
   // Populate folder information
-  await duplicateImage.populate('folderId', 'name');
 
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
@@ -286,3 +299,37 @@ export const duplicateImage = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
+/**
+ * Toggle favorite status of an image
+ * @route PATCH /api/images/:id/favorite
+ * @access Private
+ */
+export const toggleImageFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { id } = req.params;
+
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
+
+  const image = await Note.findOne({ 
+    _id: id, 
+    userId, 
+    type: 'image' 
+  });
+
+  if (!image) {
+    throw ApiError.notFound('Image not found');
+  }
+
+  image.isFavorite = !image.isFavorite;
+  await image.save();
+
+  const formattedImage = formatImageResponse(image);
+
+  successResponse(
+    res,
+    `Image ${image.isFavorite ? 'added to' : 'removed from'} favorites`,
+    { image: formattedImage }
+  );
+});

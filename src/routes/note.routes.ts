@@ -6,6 +6,7 @@ import {
   getNoteById,
   updateNote,
   deleteNote,
+  toggleNoteFavorite,
 } from '../controllers/note.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -43,6 +44,13 @@ router.get('/recent', getRecentNotes);
  * @access Private
  */
 router.get('/:id', getNoteById);
+
+/**
+ * Toggle favorite status of a note
+ * @route PATCH /api/notes/:id/favorite
+ * @access Private
+ */
+router.patch('/:id/favorite', toggleNoteFavorite);
 
 /**
  * Update a text note

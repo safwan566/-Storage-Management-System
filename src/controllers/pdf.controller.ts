@@ -28,9 +28,10 @@ function formatPDFResponse(pdf: any) {
  * @route GET /api/pdfs
  * @access Private
  * @query {string} folderId - Filter by folder ID
- * @query {string} title - Search by title (case-insensitive partial match)
+ * @query {string} search - Search by title (case-insensitive partial match)
  * @query {number} page - Page number (default: 1)
- * @query {number} limit - Items per page (default: 10)
+ * @query {number} limit - Items per page (default: 20, max: 100)
+ * @query {boolean} isFavorite - Filter by favorite status (optional)
  */
 export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
@@ -39,17 +40,10 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const { folderId, title, page, limit } = req.query;
+  const { folderId, search, page, limit, isFavorite } = req.query;
 
   // Build query
-  interface PDFQuery {
-    userId: string;
-    type: string;
-    folderId?: string | null;
-    title?: RegExp;
-  }
-  
-  const query: PDFQuery = { userId, type: 'pdf' };
+  const query: any = { userId, type: 'pdf' };
   
   // Filter by folderId
   if (folderId && typeof folderId === 'string') {
@@ -58,15 +52,20 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
     query.folderId = null;
   }
 
-  // Filter by title (case-insensitive partial match)
-  if (title && typeof title === 'string' && title.trim()) {
-    query.title = new RegExp(title.trim(), 'i');
+  // Filter by search (case-insensitive partial match)
+  if (search && typeof search === 'string' && search.trim()) {
+    query.title = { $regex: search.trim(), $options: 'i' };
   }
 
-  // Get pagination parameters
+  // Add favorite filter
+  if (isFavorite !== undefined) {
+    query.isFavorite = isFavorite === 'true';
+  }
+
+  // Get pagination parameters (default: 20 items per page)
   const { page: pageNum, limit: limitNum, skip } = getPaginationParams({
-    page: page ? Number(page) : undefined,
-    limit: limit ? Number(limit) : undefined,
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 20,
   });
 
   // Get total count for pagination
@@ -77,7 +76,7 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limitNum)
-    .populate('folderId', 'name');
+;
 
   // Format PDFs with additional fields
   const formattedPDFs = pdfs.map(formatPDFResponse);
@@ -85,7 +84,7 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   // Get pagination result
   const pagination = getPaginationResult(pageNum, limitNum, totalItems);
 
-  paginatedResponse(res, 'PDFs retrieved successfully', formattedPDFs, pagination);
+  return paginatedResponse(res, 'PDFs retrieved successfully', formattedPDFs, pagination);
 });
 
 /**
@@ -105,7 +104,7 @@ export const getPDFById = asyncHandler(async (req: Request, res: Response) => {
     _id: id, 
     userId, 
     type: 'pdf' 
-  }).populate('folderId', 'name');
+  });
 
   if (!pdf) {
     throw ApiError.notFound('PDF not found');
@@ -158,7 +157,6 @@ export const updatePDF = asyncHandler(async (req: Request, res: Response) => {
   await pdf.save();
 
   // Populate folder information
-  await pdf.populate('folderId', 'name');
 
   const formattedPDF = formatPDFResponse(pdf);
 
@@ -301,7 +299,6 @@ export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => 
   await user.save();
 
   // Populate folder information
-  await duplicatePDF.populate('folderId', 'name');
 
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
@@ -313,3 +310,37 @@ export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => 
   });
 });
 
+/**
+ * Toggle favorite status of a PDF
+ * @route PATCH /api/pdfs/:id/favorite
+ * @access Private
+ */
+export const togglePDFFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { id } = req.params;
+
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
+
+  const pdf = await Note.findOne({ 
+    _id: id, 
+    userId, 
+    type: 'pdf' 
+  });
+
+  if (!pdf) {
+    throw ApiError.notFound('PDF not found');
+  }
+
+  pdf.isFavorite = !pdf.isFavorite;
+  await pdf.save();
+
+  const formattedPDF = formatPDFResponse(pdf);
+
+  successResponse(
+    res,
+    `PDF ${pdf.isFavorite ? 'added to' : 'removed from'} favorites`,
+    { pdf: formattedPDF }
+  );
+});

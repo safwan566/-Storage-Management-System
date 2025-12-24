@@ -42,6 +42,11 @@ const noteSchema = new Schema<INote>(
       type: Date,
       default: Date.now,
     },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -53,6 +58,7 @@ noteSchema.index({ userId: 1, createdAt: -1 });
 noteSchema.index({ userId: 1, folderId: 1 });
 noteSchema.index({ userId: 1, lastAccessedAt: -1 });
 noteSchema.index({ userId: 1, type: 1 });
+noteSchema.index({ userId: 1, isFavorite: 1 });
 
 export const Note = mongoose.model<INote>('Note', noteSchema);
 
