@@ -6,6 +6,7 @@ import {
   deleteFolder,
   duplicateFolder,
   toggleFolderFavorite,
+  getFolderContents,
 } from '../controllers/folder.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -22,6 +23,9 @@ router.use(authenticate);
  * @access Private
  */
 router.get('/', getAllFolders);
+
+// Folder direct contents
+router.get('/:id/contents', getFolderContents);
 
 /**
  * Create a new folder

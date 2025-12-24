@@ -9,6 +9,56 @@ import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { getPaginationParams, getPaginationResult } from '../utils/pagination.utils';
 import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'fs';
+import { getFileSizeInfo, filePathToUrl } from '../utils/file.utils';
+
+
+export const getFolderContents = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  const { id } = req.params;
+
+  if (!userId) {
+    throw ApiError.unauthorized('User not authenticated');
+  }
+
+  const folder = await Folder.findOne({ _id: id, userId });
+
+  if (!folder) {
+    throw ApiError.notFound('Folder not found');
+  }
+
+  const subfolders = await Folder.find({ userId, parentFolder: id }).sort({ createdAt: -1 });
+
+  const notes = await Note.find({ userId, folderId: id }).sort({ createdAt: -1 });
+
+  const formattedNotes = notes.map(note => {
+    const obj = note.toObject();
+    return {
+      ...obj,
+      fileUrl: obj.fileUrl ? filePathToUrl(obj.fileUrl) : obj.fileUrl,
+      fileSizeFormatted: getFileSizeInfo(obj.fileSize).formatted,
+    };
+  });
+
+  const itemsSize = notes.reduce((acc, n) => acc + (n.fileSize || 0), 0);
+
+  successResponse(res, 'Folder contents retrieved successfully', {
+    folder: {
+      id: folder._id,
+      name: folder.name,
+      parentFolder: folder.parentFolder,
+    },
+    subfolders: {
+      count: subfolders.length,
+      items: subfolders,
+    },
+    items: {
+      count: formattedNotes.length,
+      size: itemsSize,
+      sizeFormatted: getFileSizeInfo(itemsSize).formatted,
+      data: formattedNotes,
+    },
+  });
+});
 
 
 export const getAllFolders = asyncHandler(async (req: Request, res: Response) => {

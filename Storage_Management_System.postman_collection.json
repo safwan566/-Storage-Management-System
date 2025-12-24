@@ -549,6 +549,31 @@
           }
         },
         {
+          "name": "Get Folder Contents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/folders/:id/contents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "folders", ":id", "contents"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "List direct contents of a folder: subfolders plus notes/images/pdfs with formatted file info."
+          }
+        },
+        {
           "name": "Create Folder",
           "request": {
             "method": "POST",

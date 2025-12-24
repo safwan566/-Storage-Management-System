@@ -267,9 +267,16 @@ export const getStorageStats = asyncHandler(async (req: Request, res: Response) 
     { $group: { _id: null, totalSize: { $sum: '$fileSize' } } }
   ]);
 
+  // Size of content stored inside folders (sum of files assigned to any folder)
+  const foldersSizeResult = await Note.aggregate([
+    { $match: { userId: user._id, folderId: { $ne: null } } },
+    { $group: { _id: null, totalSize: { $sum: '$fileSize' } } },
+  ]);
+
   const notesSize = notesSizeResult[0]?.totalSize || 0;
   const imagesSize = imagesSizeResult[0]?.totalSize || 0;
   const pdfsSize = pdfsSizeResult[0]?.totalSize || 0;
+  const foldersSize = foldersSizeResult[0]?.totalSize || 0;
 
   // Get storage info
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
@@ -305,6 +312,11 @@ export const getStorageStats = asyncHandler(async (req: Request, res: Response) 
         size: pdfsSize,
         sizeFormatted: getFileSizeInfo(pdfsSize).formatted,
       },
+      folders: {
+        count: totalFolders,
+        size: foldersSize,
+        sizeFormatted: getFileSizeInfo(foldersSize).formatted,
+      },
     },
     counts: {
       totalNotes,
@@ -312,7 +324,7 @@ export const getStorageStats = asyncHandler(async (req: Request, res: Response) 
       totalPDFs,
       totalFolders,
       totalFavorites,
-      totalItems: totalNotes + totalImages + totalPDFs,
+      totalItems: totalNotes + totalImages + totalPDFs + totalFolders,
     },
   };
 
