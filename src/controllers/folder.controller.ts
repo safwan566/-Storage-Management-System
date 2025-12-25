@@ -15,6 +15,7 @@ import fs from 'fs';
 
 
 export const getAllFolders = asyncHandler(async (req: Request, res: Response) => {
+  
   const userId = req.user?.userId;
 
   if (!userId) {
