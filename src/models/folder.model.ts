@@ -21,12 +21,6 @@ const folderSchema = new Schema<IFolder>(
       default: null,
       index: true,
     },
-    type: {
-      type: String,
-      enum: ['folder'],
-      required: [true, 'Type is required'],
-      default: 'folder',
-    },
     isFavorite: {
       type: Boolean,
       default: false,

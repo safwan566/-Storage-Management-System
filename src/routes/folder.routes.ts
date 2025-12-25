@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import {
   getAllFolders,
+  getFolderById,
   createFolder,
   updateFolder,
   deleteFolder,
   duplicateFolder,
   toggleFolderFavorite,
-  getFolderContents,
 } from '../controllers/folder.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -24,8 +24,12 @@ router.use(authenticate);
  */
 router.get('/', getAllFolders);
 
-// Folder direct contents
-router.get('/:id/contents', getFolderContents);
+/**
+ * Get single folder by ID
+ * @route GET /api/folders/:id
+ * @access Private
+ */
+router.get('/:id', getFolderById);
 
 /**
  * Create a new folder

@@ -94,6 +94,6 @@ export const PAGINATION = {
 export const FILE_UPLOAD = {
   ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   ALLOWED_DOCUMENT_TYPES: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILE_SIZE: 5 * 1024 * 1024, 
 } as const;
 

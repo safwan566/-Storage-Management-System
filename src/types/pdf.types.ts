@@ -1,10 +1,10 @@
 import { Document, Types } from 'mongoose';
 
-export interface INote extends Document {
+export interface IPDF extends Document {
   userId: Types.ObjectId;
   folderId?: Types.ObjectId | null;
   title: string;
-  content: string;
+  fileUrl: string;
   fileSize: number;
   lastAccessedAt: Date;
   isFavorite: boolean;
@@ -12,13 +12,14 @@ export interface INote extends Document {
   updatedAt: Date;
 }
 
-export interface INoteResponse {
+export interface IPDFResponse {
   _id: string;
   userId: string;
   folderId?: string | null;
   title: string;
-  content: string;
+  fileUrl: string;
   fileSize: number;
+  fileSizeFormatted?: string;
   lastAccessedAt: Date;
   isFavorite: boolean;
   createdAt: Date;

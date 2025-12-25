@@ -7,7 +7,6 @@ export interface IFolder extends Document {
   isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
-  type: 'folder';
 }
 
 export interface IFolderResponse {

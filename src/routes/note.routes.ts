@@ -7,6 +7,7 @@ import {
   updateNote,
   deleteNote,
   toggleNoteFavorite,
+  duplicateNote,
 } from '../controllers/note.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -51,6 +52,13 @@ router.get('/:id', getNoteById);
  * @access Private
  */
 router.patch('/:id/favorite', toggleNoteFavorite);
+
+/**
+ * Duplicate a note
+ * @route POST /api/notes/:id/duplicate
+ * @access Private
+ */
+router.post('/:id/duplicate', duplicateNote);
 
 /**
  * Update a text note

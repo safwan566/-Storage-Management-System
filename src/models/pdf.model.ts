@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
-import { INote } from '../types/note.types';
+import { IPDF } from '../types/pdf.types';
 
-const noteSchema = new Schema<INote>(
+const pdfSchema = new Schema<IPDF>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -21,9 +21,9 @@ const noteSchema = new Schema<INote>(
       trim: true,
       maxlength: [200, 'Title cannot exceed 200 characters'],
     },
-    content: {
+    fileUrl: {
       type: String,
-      default: '',
+      required: [true, 'File URL is required'],
     },
     fileSize: {
       type: Number,
@@ -46,19 +46,9 @@ const noteSchema = new Schema<INote>(
 );
 
 // Indexes for better query performance
-noteSchema.index({ userId: 1, createdAt: -1 });
-noteSchema.index({ userId: 1, folderId: 1 });
-noteSchema.index({ userId: 1, lastAccessedAt: -1 });
-noteSchema.index({ userId: 1, isFavorite: 1 });
+pdfSchema.index({ userId: 1, createdAt: -1 });
+pdfSchema.index({ userId: 1, folderId: 1 });
+pdfSchema.index({ userId: 1, lastAccessedAt: -1 });
+pdfSchema.index({ userId: 1, isFavorite: 1 });
 
-export const Note = mongoose.model<INote>('Note', noteSchema);
-
-
-
-
-
-
-
-
-
-
+export const PDF = mongoose.model<IPDF>('PDF', pdfSchema);

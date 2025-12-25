@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
-import { INote } from '../types/note.types';
+import { IImage } from '../types/image.types';
 
-const noteSchema = new Schema<INote>(
+const imageSchema = new Schema<IImage>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -21,9 +21,9 @@ const noteSchema = new Schema<INote>(
       trim: true,
       maxlength: [200, 'Title cannot exceed 200 characters'],
     },
-    content: {
+    fileUrl: {
       type: String,
-      default: '',
+      required: [true, 'File URL is required'],
     },
     fileSize: {
       type: Number,
@@ -46,19 +46,9 @@ const noteSchema = new Schema<INote>(
 );
 
 // Indexes for better query performance
-noteSchema.index({ userId: 1, createdAt: -1 });
-noteSchema.index({ userId: 1, folderId: 1 });
-noteSchema.index({ userId: 1, lastAccessedAt: -1 });
-noteSchema.index({ userId: 1, isFavorite: 1 });
+imageSchema.index({ userId: 1, createdAt: -1 });
+imageSchema.index({ userId: 1, folderId: 1 });
+imageSchema.index({ userId: 1, lastAccessedAt: -1 });
+imageSchema.index({ userId: 1, isFavorite: 1 });
 
-export const Note = mongoose.model<INote>('Note', noteSchema);
-
-
-
-
-
-
-
-
-
-
+export const Image = mongoose.model<IImage>('Image', imageSchema);

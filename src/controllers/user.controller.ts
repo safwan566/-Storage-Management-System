@@ -44,7 +44,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
     }
 
     // Set new avatar path (relative to uploads directory)
-    updateData.avatar = `/uploads/${req.file.filename}`;
+    updateData.avatar = `/api/uploads/${req.file.filename}`;
   }
 
   // Validate that at least one field is being updated

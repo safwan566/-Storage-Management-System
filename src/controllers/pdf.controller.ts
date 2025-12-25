@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { User } from '../models/user.model';
-import { Note } from '../models/note.model';
+import { PDF } from '../models/pdf.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { normalizeFilePath, getFileSizeInfo, filePathToUrl } from '../utils/file.utils';
@@ -11,9 +11,6 @@ import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'node:fs';
 import path from 'node:path';
 
-/**
- * Format PDF response with additional fields
- */
 function formatPDFResponse(pdf: any) {
   const pdfObj = pdf.toObject ? pdf.toObject() : pdf;
   return {
@@ -23,16 +20,6 @@ function formatPDFResponse(pdf: any) {
   };
 }
 
-/**
- * Get all PDFs for current user with filtering and pagination
- * @route GET /api/pdfs
- * @access Private
- * @query {string} folderId - Filter by folder ID
- * @query {string} search - Search by title (case-insensitive partial match)
- * @query {number} page - Page number (default: 1)
- * @query {number} limit - Items per page (default: 20, max: 100)
- * @query {boolean} isFavorite - Filter by favorite status (optional)
- */
 export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
@@ -43,7 +30,7 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   const { folderId, search, page, limit, isFavorite } = req.query;
 
   // Build query
-  const query: any = { userId, type: 'pdf' };
+  const query: any = { userId };
   
   // Filter by folderId
   if (folderId && typeof folderId === 'string') {
@@ -69,14 +56,13 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   });
 
   // Get total count for pagination
-  const totalItems = await Note.countDocuments(query);
+  const totalItems = await PDF.countDocuments(query);
 
   // Get PDFs with pagination
-  const pdfs = await Note.find(query)
+  const pdfs = await PDF.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limitNum)
-;
+    .limit(limitNum);
 
   // Format PDFs with additional fields
   const formattedPDFs = pdfs.map(formatPDFResponse);
@@ -87,11 +73,6 @@ export const getAllPDFs = asyncHandler(async (req: Request, res: Response) => {
   return paginatedResponse(res, 'PDFs retrieved successfully', formattedPDFs, pagination);
 });
 
-/**
- * Get single PDF by ID
- * @route GET /api/pdfs/:id
- * @access Private
- */
 export const getPDFById = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -100,10 +81,9 @@ export const getPDFById = asyncHandler(async (req: Request, res: Response) => {
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const pdf = await Note.findOne({ 
+  const pdf = await PDF.findOne({ 
     _id: id, 
-    userId, 
-    type: 'pdf' 
+    userId
   });
 
   if (!pdf) {
@@ -119,11 +99,6 @@ export const getPDFById = asyncHandler(async (req: Request, res: Response) => {
   successResponse(res, 'PDF retrieved successfully', { pdf: formattedPDF });
 });
 
-/**
- * Update PDF metadata (title, folder)
- * @route PATCH /api/pdfs/:id
- * @access Private
- */
 export const updatePDF = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -134,10 +109,9 @@ export const updatePDF = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find the PDF
-  const pdf = await Note.findOne({ 
+  const pdf = await PDF.findOne({ 
     _id: id, 
-    userId, 
-    type: 'pdf' 
+    userId
   });
 
   if (!pdf) {
@@ -163,11 +137,6 @@ export const updatePDF = asyncHandler(async (req: Request, res: Response) => {
   successResponse(res, 'PDF updated successfully', { pdf: formattedPDF });
 });
 
-/**
- * Delete a PDF
- * @route DELETE /api/pdfs/:id
- * @access Private
- */
 export const deletePDF = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -177,10 +146,9 @@ export const deletePDF = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find the PDF
-  const pdf = await Note.findOne({ 
+  const pdf = await PDF.findOne({ 
     _id: id, 
-    userId, 
-    type: 'pdf' 
+    userId
   });
 
   if (!pdf) {
@@ -217,18 +185,13 @@ export const deletePDF = asyncHandler(async (req: Request, res: Response) => {
   await user.save();
 
   // Delete PDF from database
-  await Note.deleteOne({ _id: pdf._id });
+  await PDF.deleteOne({ _id: pdf._id });
 
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
   successResponse(res, 'PDF deleted successfully', { storage: storageInfo });
 });
 
-/**
- * Duplicate a PDF
- * @route POST /api/pdfs/:id/duplicate
- * @access Private
- */
 export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -238,10 +201,9 @@ export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => 
   }
 
   // Find the original PDF
-  const originalPDF = await Note.findOne({ 
+  const originalPDF = await PDF.findOne({ 
     _id: id, 
-    userId, 
-    type: 'pdf' 
+    userId
   });
 
   if (!originalPDF) {
@@ -284,12 +246,11 @@ export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.notFound('Original PDF file not found');
   }
 
-  // Create duplicate note
-  const duplicatePDF = await Note.create({
+  // Create duplicate PDF
+  const duplicatePDF = await PDF.create({
     userId: user._id,
     folderId: originalPDF.folderId,
     title: `${originalPDF.title} (Copy)`,
-    type: 'pdf',
     fileUrl: newFileUrl,
     fileSize: originalPDF.fileSize,
   });
@@ -310,11 +271,6 @@ export const duplicatePDF = asyncHandler(async (req: Request, res: Response) => 
   });
 });
 
-/**
- * Toggle favorite status of a PDF
- * @route PATCH /api/pdfs/:id/favorite
- * @access Private
- */
 export const togglePDFFavorite = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -323,10 +279,9 @@ export const togglePDFFavorite = asyncHandler(async (req: Request, res: Response
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const pdf = await Note.findOne({ 
+  const pdf = await PDF.findOne({ 
     _id: id, 
-    userId, 
-    type: 'pdf' 
+    userId
   });
 
   if (!pdf) {

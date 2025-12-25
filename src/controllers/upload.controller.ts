@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { User } from '../models/user.model';
-import { Note } from '../models/note.model';
+import { Image } from '../models/image.model';
+import { PDF } from '../models/pdf.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { normalizeFilePath, getFileSizeInfo, filePathToUrl } from '../utils/file.utils';
@@ -49,12 +50,11 @@ export const uploadImageFile = asyncHandler(async (req: Request, res: Response) 
     );
   }
 
-  // Create note document for image
-  const note = await Note.create({
+  // Create image document
+  const image = await Image.create({
     userId: user._id,
     folderId: req.body.folderId || null,
     title: req.body.title || path.basename(req.file.originalname, path.extname(req.file.originalname)),
-    type: 'image',
     fileUrl,
     fileSize,
   });
@@ -66,14 +66,14 @@ export const uploadImageFile = asyncHandler(async (req: Request, res: Response) 
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
   // Add formatted file size to the response
-  const noteResponse = {
-    ...note.toObject(),
-    fileUrl: note.fileUrl ? filePathToUrl(note.fileUrl) : note.fileUrl,
+  const imageResponse = {
+    ...image.toObject(),
+    fileUrl: image.fileUrl ? filePathToUrl(image.fileUrl) : image.fileUrl,
     fileSizeFormatted: fileSizeInfo.formatted,
   };
 
   successResponse(res, 'Image uploaded successfully', {
-    note: noteResponse,
+    note: imageResponse,
     storage: storageInfo,
   });
 });
@@ -118,12 +118,11 @@ export const uploadPDFFile = asyncHandler(async (req: Request, res: Response) =>
     );
   }
 
-  // Create note document for PDF
-  const note = await Note.create({
+  // Create PDF document
+  const pdf = await PDF.create({
     userId: user._id,
     folderId: req.body.folderId || null,
     title: req.body.title || path.basename(req.file.originalname, path.extname(req.file.originalname)),
-    type: 'pdf',
     fileUrl,
     fileSize,
   });
@@ -135,14 +134,14 @@ export const uploadPDFFile = asyncHandler(async (req: Request, res: Response) =>
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
   // Add formatted file size to the response
-  const noteResponse = {
-    ...note.toObject(),
-    fileUrl: note.fileUrl ? filePathToUrl(note.fileUrl) : note.fileUrl,
+  const pdfResponse = {
+    ...pdf.toObject(),
+    fileUrl: pdf.fileUrl ? filePathToUrl(pdf.fileUrl) : pdf.fileUrl,
     fileSizeFormatted: fileSizeInfo.formatted,
   };
 
   successResponse(res, 'PDF uploaded successfully', {
-    note: noteResponse,
+    note: pdfResponse,
     storage: storageInfo,
   });
 });

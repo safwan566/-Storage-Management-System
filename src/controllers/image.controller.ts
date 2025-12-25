@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { User } from '../models/user.model';
-import { Note } from '../models/note.model';
+import { Image } from '../models/image.model';
 import { successResponse } from '../views/responses/success.response';
 import { getStorageInfo, hasEnoughStorage } from '../utils/storage.utils';
 import { normalizeFilePath, getFileSizeInfo, filePathToUrl } from '../utils/file.utils';
@@ -11,9 +11,6 @@ import { paginatedResponse } from '../views/responses/pagination.response';
 import fs from 'node:fs';
 import path from 'node:path';
 
-/**
- * Format image response with additional fields
- */
 function formatImageResponse(image: any) {
   const imageObj = image.toObject ? image.toObject() : image;
   return {
@@ -23,16 +20,7 @@ function formatImageResponse(image: any) {
   };
 }
 
-/**
- * Get all images for current user with pagination and search
- * @route GET /api/images
- * @access Private
- * @query {number} page - Page number (default: 1)
- * @query {number} limit - Items per page (default: 20, max: 100)
- * @query {string} search - Search by title (optional)
- * @query {string} folderId - Filter by folder ID (optional)
- * @query {boolean} isFavorite - Filter by favorite status (optional)
- */
+
 export const getAllImages = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
 
@@ -49,7 +37,7 @@ export const getAllImages = asyncHandler(async (req: Request, res: Response) => 
   });
 
   // Build query
-  const query: any = { userId, type: 'image' };
+  const query: any = { userId };
 
   // Add search filter
   if (search && typeof search === 'string') {
@@ -67,14 +55,13 @@ export const getAllImages = asyncHandler(async (req: Request, res: Response) => 
   }
 
   // Get total count
-  const totalItems = await Note.countDocuments(query);
+  const totalItems = await Image.countDocuments(query);
 
   // Get images with pagination
-  const images = await Note.find(query)
+  const images = await Image.find(query)
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limitNum)
-;
+    .limit(limitNum);
 
   // Format images with additional fields
   const formattedImages = images.map(formatImageResponse);
@@ -85,11 +72,7 @@ export const getAllImages = asyncHandler(async (req: Request, res: Response) => 
   return paginatedResponse(res, 'Images retrieved successfully', formattedImages, pagination);
 });
 
-/**
- * Get single image by ID
- * @route GET /api/images/:id
- * @access Private
- */
+
 export const getImageById = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -98,10 +81,9 @@ export const getImageById = asyncHandler(async (req: Request, res: Response) => 
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const image = await Note.findOne({ 
+  const image = await Image.findOne({ 
     _id: id, 
-    userId, 
-    type: 'image' 
+    userId
   });
 
   if (!image) {
@@ -127,10 +109,9 @@ export const updateImage = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find the image
-  const image = await Note.findOne({ 
+  const image = await Image.findOne({ 
     _id: id, 
-    userId, 
-    type: 'image' 
+    userId
   });
 
   if (!image) {
@@ -166,10 +147,9 @@ export const deleteImage = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Find the image
-  const image = await Note.findOne({ 
+  const image = await Image.findOne({ 
     _id: id, 
-    userId, 
-    type: 'image' 
+    userId
   });
 
   if (!image) {
@@ -206,18 +186,13 @@ export const deleteImage = asyncHandler(async (req: Request, res: Response) => {
   await user.save();
 
   // Delete image from database
-  await Note.deleteOne({ _id: image._id });
+  await Image.deleteOne({ _id: image._id });
 
   const storageInfo = getStorageInfo(user.storageUsed, user.storageLimit);
 
   successResponse(res, 'Image deleted successfully', { storage: storageInfo });
 });
 
-/**
- * Duplicate an image
- * @route POST /api/images/:id/duplicate
- * @access Private
- */
 export const duplicateImage = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -227,10 +202,9 @@ export const duplicateImage = asyncHandler(async (req: Request, res: Response) =
   }
 
   // Find the original image
-  const originalImage = await Note.findOne({ 
+  const originalImage = await Image.findOne({ 
     _id: id, 
-    userId, 
-    type: 'image' 
+    userId
   });
 
   if (!originalImage) {
@@ -273,12 +247,11 @@ export const duplicateImage = asyncHandler(async (req: Request, res: Response) =
     throw ApiError.notFound('Original image file not found');
   }
 
-  // Create duplicate note
-  const duplicateImage = await Note.create({
+  // Create duplicate image
+  const duplicateImage = await Image.create({
     userId: user._id,
     folderId: originalImage.folderId,
     title: `${originalImage.title} (Copy)`,
-    type: 'image',
     fileUrl: newFileUrl,
     fileSize: originalImage.fileSize,
   });
@@ -299,11 +272,6 @@ export const duplicateImage = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
-/**
- * Toggle favorite status of an image
- * @route PATCH /api/images/:id/favorite
- * @access Private
- */
 export const toggleImageFavorite = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId;
   const { id } = req.params;
@@ -312,10 +280,9 @@ export const toggleImageFavorite = asyncHandler(async (req: Request, res: Respon
     throw ApiError.unauthorized('User not authenticated');
   }
 
-  const image = await Note.findOne({ 
+  const image = await Image.findOne({ 
     _id: id, 
-    userId, 
-    type: 'image' 
+    userId
   });
 
   if (!image) {
